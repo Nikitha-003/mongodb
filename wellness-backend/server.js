@@ -9,13 +9,15 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
-mongoose.connect("mongodb://localhost:27017/wellnessDB");
-
+// Connect to MongoDB (Use Atlas connection from .env)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const db = mongoose.connection;
-db.on("error", console.error.bind(console, "Connection error:"));
-db.once("open", () => console.log("Connected to MongoDB"));
+db.on("error", console.error.bind(console, "❌ Connection error:"));
+db.once("open", () => console.log("✅ Connected to MongoDB Atlas"));
 
 // Define Schema and Model
 const patientSchema = new mongoose.Schema({
@@ -26,67 +28,64 @@ const patientSchema = new mongoose.Schema({
   medical_history: [
     {
       condition: String,
-      diagnosed_on: String
-    }
+      diagnosed_on: String,
+    },
   ],
   appointments: [
     {
       date: String,
       doctor: String,
-      department: String
-    }
+      department: String,
+    },
   ],
   diagnostics: [
     {
       test_name: String,
       result: String,
-      date: String
-    }
+      date: String,
+    },
   ],
   mental_health: [
     {
       session_notes: String,
       evaluation: String,
-      therapist: String
-    }
+      therapist: String,
+    },
   ],
   physiotherapy: [
     {
       progress_log: String,
-      session_date: String
-    }
+      session_date: String,
+    },
   ],
   nutrition: [
     {
       dietary_plan: String,
       calorie_intake: Number,
-      progress: String
-    }
+      progress: String,
+    },
   ],
   yoga: [
     {
       session_plan: String,
-      wearable_data: String
-    }
-  ]
+      wearable_data: String,
+    },
+  ],
 });
-
 
 const Patient = mongoose.model("Patient", patientSchema);
 
 // API Routes
 
-// Get all patients
 // Get all patients sorted by patient_id
 app.get("/patients", async (req, res) => {
   try {
-    const patients = await Patient.find().sort({ patient_id: 1 }); // 🔥 Sort in ascending order
+    const patients = await Patient.find().sort({ patient_id: 1 });
     res.json(patients);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 // Add new patient
 app.post("/patients", async (req, res) => {
@@ -100,4 +99,4 @@ app.post("/patients", async (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
