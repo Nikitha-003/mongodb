@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // Connect to MongoDB (Use Atlas connection from .env)
 mongoose.connect(process.env.MONGO_URI, {
@@ -91,12 +91,58 @@ app.get("/patients", async (req, res) => {
 app.post("/patients", async (req, res) => {
   try {
     const newPatient = new Patient(req.body);
-    await newPatient.save();
-    res.json({ message: "Patient added successfully!" });
+    const savedPatient = await newPatient.save();
+    res.json(savedPatient); // Send back the saved patient data
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+// Update Patient
+app.put("/patients/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedPatient = await Patient.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedPatient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+    res.json(updatedPatient);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
+
+
+app.delete("/patients/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedPatient = await Patient.findByIdAndDelete(id);
+    if (!deletedPatient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+    res.json({ message: "Patient deleted successfully!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+
+
 // Start Server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+
+// Add this route before your existing routes
+app.get("/patients/next-id", async (req, res) => {
+  try {
+    const patients = await Patient.find().sort({ patient_id: -1 }).limit(1);
+    const lastId = patients.length > 0 ? parseInt(patients[0].patient_id.substring(1)) : 0;
+    const nextId = `P${String(lastId + 1).padStart(3, '0')}`;
+    res.json({ nextId });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
